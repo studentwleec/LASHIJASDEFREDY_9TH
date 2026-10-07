@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dem Bow en el 42</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0a0f; color: #eee; }
+    .title { text-align: center; padding: 1rem; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 0.3em; text-shadow: 0 0 10px #ff1744; }
+    .controls { text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.6); margin: 1rem; border-radius: 8px; }
+    button { padding: 0.6rem 1.2rem; font-size: 1rem; background: #ff1744; color: #fff; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #cc133d; }
+    .playing { background: #28a745; }
+    .scene { position: relative; width: 100%; aspect-ratio: 16/9; min-height: 100%; overflow: hidden; perspective: 800px; }
+    .bg { position: absolute; inset: 0; }
+    .sky { width: 100%; height: 100%; background: linear-gradient(180deg, #ff6b35 0%, #fbbc04 35%, #e96b59 100%); }
+    .mountains { position: absolute; bottom: 0; left: 0; right: 0; height: 40%; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1400 500'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath d='M0 500 L1400 500 L1400 350 L800 420 L400 380 L0 450 Z' fill='#2a2a3a' filter='url(%23noise)'/%3E%3C/svg%3E") no-repeat center bottom / cover; }
+    .street { position: absolute; bottom: 35%; left: 0; right: 0; height: 20%; background: #25252d; border-top: 3px solid #1a1a22; }
+    .road { position: absolute; bottom: 0; left: 15%; right: 15%; height: 80%; background: linear-gradient(90deg, #3a3a4a 0%, #25252d 100%); }
+    .road-lines { position: absolute; bottom: 0; left: 0; right: 0; height: 100%; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.15) 4%, transparent 4%, transparent 8%); }
+    .sign { position: absolute; top: 2%; left: 5%; width: 180px; height: 50px; background: #1a1a22; border: 2px solid #ff1744; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #ff1744; }
+    .houses { position: absolute; top: 10%; left: 5%; right: 5%; height: 50%; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2%; }
+    .house { flex: 1; min-width: 80px; background: #d0a865; border: 1px solid #a0804a; border-radius: 3px; padding: 4px 2px; position: relative; }
+    .roof { width: 100%; height: 40%; background: #b84527; position: absolute; top: 0; left: 0; }
+    .door { width: 25%; height: 35%; background: #8b5a3c; position: absolute; bottom: 5%; left: 37.5%; border-radius: 2px; }
+    .window { width: 15%; height: 20%; background: #3a5a7c; position: absolute; bottom: 45%; left: 42.5%; border-radius: 2px; }
+    .chimney { position: absolute; top: -10%; left: 50%; width: 8px; height: 20px; background: #777; border-radius: 2px; }
+    .wires { position: absolute; top: 15%; left: 2%; right: 2%; height: 60%; display: flex; justify-content: space-between; }
+    .wire { position: absolute; left: 50%; top: 20%; width: 2px; height: 40%; background: #555; }
+    .pole { position: absolute; right: 3%; top: 30%; width: 6px; height: 30px; background: #555; }
+    .clothesline { position: absolute; top: 35%; left: 10%; right: 10%; height: 8px; background: #555; display: flex; justify-content: space-between; }
+    .cloth { width: 6px; height: 10px; background: #ffb347; border-radius: 2px 2px 0 0; margin: 2px 0; }
+    .bocina { position: absolute; left: 4%; top: 45%; width: 80px; height: 40px; background: #5a2d1a; border: 2px solid #8b5a3c; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #ffd7a5; }
+    .speaker { width: 30px; height: 20px; background: #3d2116; border: 2px solid #5a2d1a; border-radius: 3px; position: relative; }
+    .speaker::before, .speaker::after { content: ''; position: absolute; width: 10px; height: 10px; background: #ffd7a5; border-radius: 50%; top: 50%; transform: translateY(-50%); }
+    .speaker::before { left: 6px; }
+    .speaker::after { right: 6px; }
+    .domino-table { position: absolute; right: 4%; top: 45%; width: 120px; height: 60px; background: #1a1a22; border: 2px solid #555; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #aaa; }
+    .domino { width: 8px; height: 8px; background: #fff; margin: 0 2px; border-radius: 50%; box-shadow: 0 0 2px #fff; }
+    .dancer-wrap { position: absolute; bottom: 5%; left: 20%; width: 160px; height: 230px; transform-style: preserve-3d; }
+    .dancer { width: 120px; height: 230px; position: relative; }
+    .dancer .shadow { position: absolute; bottom: -8px; left: 46px; width: 34px; height: 7px; background: rgba(0,0,0,0.3); border-radius: 50%; }
+    .dancer .legs { position: absolute; bottom: 0; left: 0; right: 0; height: 70px; }
+    .dancer .legs .leg { position: absolute; left: 44px; bottom: 0; width: 12px; height: 50px; background: #7ec8f2; border-radius: 0 0 5px 5px; }
+    .dancer .legs .leg.l { left: 42px; }
+    .dancer .shorts { position: absolute; bottom: 65px; left: 35px; width: 50px; height: 30px; background: #4a90e2; border-radius: 3px 3px 0 0; }
+    .dancer .body { position: absolute; bottom: 65px; left: 30px; right: 30px; background: #ffe4c4; border-radius: 0 0 5px 5px; height: 60px; }
+    .dancer .torso { width: 100%; height: 50%; background: #ffe4c4; position: relative; }
+    .dancer .arm { position: absolute; width: 30px; height: 45px; background: #ffe4c4; border-radius: 5px; top: -40px; left: 15px; transform-origin: center top; }
+    .dancer .arm.l { left: 15px; }
+    .dancer .arm.r { right: 15px; }
+    .dancer .head { position: absolute; width: 30px; height: 30px; background: #ffe4c4; border-radius: 50%; top: -20px; left: 45px; }
+    .dancer .hat { position: absolute; width: 100%; height: 20px; background: #ff1744; border-radius: 2px 2px 0 0; top: -25px; left: 0; }
+    .dancer .name { position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; text-align: center; width: 100%; }
+    .dancer .note { position: absolute; top: -30px; width: 6px; height: 6px; background: #ff1744; border-radius: 50%; animation: noteFloat 1s ease-in-out infinite; }
+    .dancer .note.n1 { left: 20px; animation-delay: 0s; }
+    .dancer .note.n2 { left: 50px; animation-delay: 0.2s; }
+    .dancer .note.n3 { left: 80px; animation-delay: 0.4s; }
+    @keyframes noteFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes beatPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .beat .bocina { animation: beatPulse 0.1s infinite; }
+    .beat .speaker { animation: beatPulse 0.1s infinite; }
+    .beat .road-lines { animation: beatPulse 0.05s infinite; }
+    .beat .dancer .shadow { animation: beatPulse 0.1s infinite; }
+    @keyframes dancerBounce { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
+    @keyframes dancerSway { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+    @keyframes dancerHeadBob { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+    @keyframes dancerArmPump { 0%,100% { transform: rotate(30deg); } 50% { transform: rotate(-90deg); } }
+    @keyframes chopoWave { 0%,100% { transform: rotate(-10deg) translateY(0); } 50% { transform: rotate(10deg) translateY(-8px); } }
+    .dancer { animation: dancerBounce 1.2s ease-in-out infinite, dancerSway 1.2s ease-in-out infinite, dancerHeadBob 1.2s ease-in-out infinite; }
+    .dancer .arm { animation: dancerArmPump 1.2s ease-in-out infinite; }
+    .dancer .head { animation: dancerHeadBob 1.2s ease-in-out infinite; }
+    .dancer.c1 .arm { animation-direction: alternate; }
+    .dancer.c2 .arm { animation-direction: alternate-reverse; }
+    .dancer.c3 .arm { animation-direction: normal; }
+    .dancer.c4 { transform: scale(1.18); animation: chopoWave 1s ease-in-out infinite; }
+    .dancer.c4 .arm { animation-direction: alternate; animation-name: chopoArm; }
+    @keyframes chopoArm { 0%,100% { transform: rotate(20deg); } 50% { transform: rotate(-70deg); } }
+    .low-res { font-size: 0.7rem; color: #aaa; text-align: center; padding: 0.5rem; background: rgba(0,0,0,0.5); position: absolute; bottom: 2%; left: 50%; transform: translateX(-50%); width: 80%; }
+  </style>
+</head>
+<body>
+  <div class="title">DEM BOW EN EL 42</div>
+  <div class="controls">
+    <button id="playBtn">▶ PONER DEMBOW</button>
+    <span id="bpmText">95 BPM</span>
+  </div>
+  <div class="scene">
+    <!-- Sky -->
+    <div class="bg sky"></div>
+    <!-- Mountains -->
+    <div class="bg mountains"></div>
+    <!-- Street -->
+    <div class="bg street">
+      <div class="road-lines"></div>
+      <div class="road"></div>
+    </div>
+    <!-- Sign -->
+    <div class="bg sign">CALLE 42</div>
+    <!-- Houses -->
+    <div class="bg houses">
+      <div class="house"><div class="roof"></div><div class="door"></div><div class="window"></div><div class="chimney"></div></div>
+      <div class="house"><div class="roof"></div><div class="door"></div><div class="window"></div></div>
+      <div class="house"><div class="roof"></div><div class="door"></div></div>
+      <div class="house"><div class="roof"></div><div class="window"></div></div>
+      <div class="house"><div class="roof"></div></div>
+    </div>
+    <!-- Wires -->
+    <div class="bg wires">
+      <div class="wire" style="left:50%;top:15%;height:40%"></div>
+      <div class="wire" style="left:30%;top:25%;height:35%"></div>
+      <div class="wire" style="left:70%;top:30%;height:30%"></div>
+      <div class="pole" style="right:3%;top:30%;width:6px;height:30px"></div>
+      <div class="pole" style="left:5%;top:35%;width:6px;height:30px"></div>
+    </div>
+    <!-- Clothesline -->
+    <div class="bg clothesline">
+      <div class="cloth"></div><div class="cloth"></div><div class="cloth"></div><div class="cloth"></div><div class="cloth"></div>
+    </div>
+    <!-- Bocina -->
+    <div class="bg bocina" id="bocina">BOCINA</div>
+    <!-- Domino Table -->
+    <div class="bg domino-table" id="dominoTable">MJEROLA</div>
+    <!-- Dancers -->
+    <div class="bg dancer-wrap c1"><div class="dancer"><div class="shadow"></div><div class="legs"><div class="leg"></div><div class="leg l"></div></div><div class="shorts"></div><div class="body"><div class="torso"><div class="arm"></div><div class="arm r"></div></div><div class="head"><div class="hat"></div></div></div><div class="name">JUNIOR</div><div class="note n1"></div><div class="note n2"></div><div class="note n3"></div></div></div></div>
+    <div class="bg dancer-wrap c2" style="left:25%"><div class="dancer"><div class="shadow"></div><div class="legs"><div class="leg"></div><div class="leg l"></div></div><div class="shorts" style="background:#5a90e2"></div><div class="body"><div class="torso"><div class="arm"></div><div class="arm r"></div></div><div class="head"></div></div><div class="name">PAPO</div><div class="note n1" style="animation-delay:0.1s"></div><div class="note n2" style="animation-delay:0.3s"></div><div class="note n3" style="animation-delay:0.5s"></div></div></div></div>
+    <div class="bg dancer-wrap c3" style="left:40%"><div class="dancer"><div class="shadow"></div><div class="legs"><div class="leg"></div><div class="leg l"></div></div><div class="shorts" style="background:#7e56a7"></div><div class="body"><div class="torso"><div class="arm"></div><div class="arm r"></div></div><div class="head" style="background:#ffe4c4"></div></div><div class="name">TÍO RAMÓN</div><div class="note n1" style="animation-delay:0.2s"></div><div class="note n2" style="animation-delay:0.4s"></div><div class="note n3" style="animation-delay:0.6s"></div></div></div></div>
+    <div class="bg dancer-wrap c4" style="left:33%"><div class="dancer"><div class="shadow"></div><div class="legs"><div class="leg"></div><div class="leg l"></div></div><div class="shorts" style="background:#ff6b35;bottom:55px;width:55px"></div><div class="body"><div class="torso"><div class="arm" style="left:10px"></div><div class="arm r" style="right:10px"></div></div><div class="head" style="background:#ffe4c4;top:-15px"></div><div class="hat" style="background:#2a0a3e"></div></div><div class="name">EL CHOPO</div></div></div>
+    <!-- Graffiti & details -->
+    <div class="bg" style="position:absolute;top:30%;left:10%;font-size:2rem;color:#ff1744;text-shadow:0 0 8px #fff;pointer-events:none">EL 42</div>
+    <div class="bg" style="position:absolute;top:40%;left:15%;font-size:1.5rem;color:#ffb347;pointer-events:none">CALLE</div>
+    <div class="bg" style="position:absolute;top:60%;left:8%;font-size:1.2rem;color:#7ec8f2;pointer-events:none">⛓️</div>
+    <div class="bg" style="position:absolute;top:70%;left:12%;font-size:1.2rem;color:#ffb347;pointer-events:none">🅿</div>
+    <div class="bg" style="position:absolute;top:80%;left:10%;font-size:1.2rem;color:#ffe4c4;pointer-events:none">👨‍👨‍👦</div>
+  </div>
+  <div class="low-res">Hombres de bajo recurso bailando dembow en el 42. ¡El Chopo también!</div>
+  <script>
+    (()=>{const stepsKick=[0,4,8,12];const stepsSnare=[3,6,11,14];const totalSteps=16;let ac=null;let gain=let beatIntv=null;let isPlaying=false;let stepIdx=0;const BPM=95;const stepDur=60/BPM/4;const beatDur=stepDur*4;const beatIntv=setInterval(()=>{stepIdx=(stepIdx+1)%totalSteps;if(!isPlaying){clearInterval(beatIntv);return;}const isKick=stepsKick.includes(stepIdx);const isSnare=stepsSnare.includes(stepIdx);if(isKick||isSnare){if(ac&&gain){const now=ac.currentTime;if(isKick){const osc=ac.createOscillator();osc.frequency.value=150;osc.type='sine';osc.connect(gain).start(now+0.001);osc.stop(now+0.15);}if(isSnare){const buf=ac.createBuffer(1,44100,44100);const out=buf.getChannelData(0);for(let i=0;i<44100;i out[i]=Math.random()*0.8-0.4;i++);const noise=ac.createBufferSource();noise.buffer=buf;noise.connect(gain).start(now+0.001);noise.stop(now+0.2);}}}if(isKick){document.body.classList.add('beat');setTimeout(()=>document.body.classList.remove('beat'),80);}}},stepDur);document.getElementById('playBtn').onclick=()=>{isPlaying=!isPlaying;const btn=document.getElementById('playBtn');if(isPlaying){if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();gain=ac.createGain();gain.connect(ac.destination);const osc=ac.createOscillator();osc.frequency.value=200;osc.type='sine';osc.connect(gain).start();osc.stop(ac.currentTime+0.1);}btn.textContent='⏸ PARAR';btn.classList.add('playing');}else{btn.textContent='▶ PONER DEMBOW';btn.classList.remove('playing');if(beatIntv){clearInterval(beatIntv);stepIdx=0;}}document.getElementById('bpmText').textContent=BPM+' BPM';};})();
+  </script>
+</body>
+</html>
